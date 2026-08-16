@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -917,14 +918,15 @@
 
   const PAYMENT_METHODS = [
     { key:'cash', label:'現金', icon:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/>' },
-    { key:'credit', label:'カード', icon:'<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>' },
-    { key:'dbarai', label:'d払い', icon:'<rect x="3" y="3" width="6" height="6"/><rect x="15" y="3" width="6" height="6"/><rect x="3" y="15" width="6" height="6"/><rect x="15" y="15" width="2.5" height="2.5"/><rect x="18.5" y="15" width="2.5" height="2.5"/><rect x="15" y="18.5" width="2.5" height="2.5"/><rect x="18.5" y="18.5" width="2.5" height="2.5"/>' },
-    { key:'paypay', label:'PayPay', icon:'<rect x="3" y="3" width="6" height="6"/><rect x="15" y="3" width="6" height="6"/><rect x="3" y="15" width="6" height="6"/><rect x="15" y="15" width="2.5" height="2.5"/><rect x="18.5" y="15" width="2.5" height="2.5"/><rect x="15" y="18.5" width="2.5" height="2.5"/><rect x="18.5" y="18.5" width="2.5" height="2.5"/>' },
+    { key:'credit', label:'クレジットカード', icon:'<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>' },
+    { key:'code', label:'コード決済', icon:'<rect x="3" y="3" width="6" height="6"/><rect x="15" y="3" width="6" height="6"/><rect x="3" y="15" width="6" height="6"/><rect x="15" y="15" width="2.5" height="2.5"/><rect x="18.5" y="15" width="2.5" height="2.5"/><rect x="15" y="18.5" width="2.5" height="2.5"/><rect x="18.5" y="18.5" width="2.5" height="2.5"/>' },
+    { key:'emoney', label:'電子マネー', icon:'<rect x="2" y="5" width="14" height="14" rx="2"/><path d="M18 9a4 4 0 0 1 0 6"/><path d="M20.5 7a7.5 7.5 0 0 1 0 10"/>' },
     { key:'other', label:'その他', icon:'<circle cx="12" cy="12" r="9"/><circle cx="8" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="16" cy="12" r="1.2" fill="currentColor" stroke="none"/>' }
   ];
-  // 旧バージョンで「コード決済(code)」として保存された記録も表示が消えないようにするための互換用データ
+  // 旧バージョンで「d払い」「PayPay」として保存された記録も表示が消えないようにするための互換用データ
   const LEGACY_METHODS = {
-    code: { key:'code', label:'コード決済', icon:'<rect x="3" y="3" width="6" height="6"/><rect x="15" y="3" width="6" height="6"/><rect x="3" y="15" width="6" height="6"/><rect x="15" y="15" width="2.5" height="2.5"/><rect x="18.5" y="15" width="2.5" height="2.5"/><rect x="15" y="18.5" width="2.5" height="2.5"/><rect x="18.5" y="18.5" width="2.5" height="2.5"/>' }
+    dbarai: { key:'dbarai', label:'d払い', icon:'<rect x="3" y="3" width="6" height="6"/><rect x="15" y="3" width="6" height="6"/><rect x="3" y="15" width="6" height="6"/><rect x="15" y="15" width="2.5" height="2.5"/><rect x="18.5" y="15" width="2.5" height="2.5"/><rect x="15" y="18.5" width="2.5" height="2.5"/><rect x="18.5" y="18.5" width="2.5" height="2.5"/>' },
+    paypay: { key:'paypay', label:'PayPay', icon:'<rect x="3" y="3" width="6" height="6"/><rect x="15" y="3" width="6" height="6"/><rect x="3" y="15" width="6" height="6"/><rect x="15" y="15" width="2.5" height="2.5"/><rect x="18.5" y="15" width="2.5" height="2.5"/><rect x="15" y="18.5" width="2.5" height="2.5"/><rect x="18.5" y="18.5" width="2.5" height="2.5"/>' }
   };
   function methodInfo(key){ return PAYMENT_METHODS.find(m => m.key === key) || LEGACY_METHODS[key] || null; }
 
