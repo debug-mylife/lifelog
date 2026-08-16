@@ -2,6 +2,8 @@
 
 メモ帳・カレンダー・家計簿を1つにまとめた、ローカル完結型のWebアプリです。
 
+**バージョン**: v1.0.0 | **最終更新**: 2026年8月16日
+
 🔗 **公開ページ**: https://debug-mylife.github.io/lifelog/
 
 作成: [debug-mylife](https://github.com/debug-mylife)
