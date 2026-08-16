@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LifeLog - メモ帳・カレンダー・家計簿</title>
+
+<!-- スマホのホーム画面に追加したときに、アプリらしいアイコン・名前・全画面表示にするための設定 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LifeLog">
+<meta name="theme-color" content="#48583F">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2348583F'/%3E%3Cpath d='M35 20h22l13 13v37a4 4 0 0 1-4 4H35a4 4 0 0 1-4-4V24a4 4 0 0 1 4-4z' fill='none' stroke='%23F6F4EC' stroke-width='5'/%3E%3Cpath d='M57 20v13h13' fill='none' stroke='%23F6F4EC' stroke-width='5'/%3E%3Cline x1='40' y1='46' x2='60' y2='46' stroke='%23F6F4EC' stroke-width='5'/%3E%3Cline x1='40' y1='58' x2='52' y2='58' stroke='%23F6F4EC' stroke-width='5'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2348583F'/%3E%3Cpath d='M35 20h22l13 13v37a4 4 0 0 1-4 4H35a4 4 0 0 1-4-4V24a4 4 0 0 1 4-4z' fill='none' stroke='%23F6F4EC' stroke-width='5'/%3E%3Cpath d='M57 20v13h13' fill='none' stroke='%23F6F4EC' stroke-width='5'/%3E%3Cline x1='40' y1='46' x2='60' y2='46' stroke='%23F6F4EC' stroke-width='5'/%3E%3Cline x1='40' y1='58' x2='52' y2='58' stroke='%23F6F4EC' stroke-width='5'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F6F4EC;
+    --paper-raised:#FFFFFF;
+    --paper-dim:#FBFAF5;
+    --ink:#242720;
+    --ink-soft:#6B6A5D;
+    --moss:#48583F;
+    --moss-dark:#333F2C;
+    --slate:#3B5872;
+    --line:#DCD6C6;
+    --amber:#C8933D;
+    --danger:#9A4A32;
+    --danger-soft:#F3E4DE;
+    --radius:10px;
+    --shadow: 0 1px 2px rgba(36,39,32,0.06), 0 4px 14px rgba(36,39,32,0.05);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Zen Kaku Gothic New', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* ---------- Shell ---------- */
+  .app-shell{
+    display:flex;
+    height:100vh;
+    overflow:hidden;
+  }
+  .nav-rail{
+    width:60px;
+    flex-shrink:0;
+    background:var(--paper-raised);
+    border-right:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:20px 0;
+    gap:8px;
+  }
+  .nav-btn{
+    width:38px;height:38px;
+    border:none;background:none;
+    border-radius:9px;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .nav-btn svg{width:19px;height:19px;stroke:currentColor;stroke-width:1.8;fill:none;}
+  .nav-btn:hover{background:rgba(72,88,63,0.08); color:var(--moss-dark);}
+  .nav-btn.active{background:var(--moss); color:#F6F4EC;}
+  .view-container{flex:1;min-width:0;height:100%;}
+  .view{display:none;height:100%;}
+  .view.active{display:flex;}
+
+  /* ---------- Memo: sidebar ---------- */
+  .app{
+    display:grid;
+    grid-template-columns: 300px 1fr;
+    height:100%;
+    flex:1;
+    min-width:0;
+    overflow:hidden;
+  }
+  .sidebar{
+    background:var(--paper);
+    border-right:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+  }
+  .sidebar-head{padding:22px 18px 14px; border-bottom:1px solid var(--line);}
+  .brand{
+    font-family:'Fraunces', serif; font-weight:600; font-size:22px;
+    letter-spacing:0.2px; margin:0 0 14px;
+    display:flex; align-items:baseline; gap:8px;
+  }
+  .brand small{font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft); font-weight:400;}
+  .search{position:relative;}
+  .search input{
+    width:100%; padding:9px 12px 9px 32px; border:1px solid var(--line); border-radius:8px;
+    background:var(--paper-raised); font-size:13.5px; color:var(--ink); font-family:inherit;
+    outline:none; transition:border-color .15s ease;
+  }
+  .search input:focus{border-color:var(--moss);}
+  .search svg{position:absolute; left:10px; top:50%; transform:translateY(-50%); width:14px; height:14px; stroke:var(--ink-soft);}
+  .new-btn{
+    margin:12px 18px 0; padding:9px 14px; background:var(--moss); color:#F6F4EC; border:none;
+    border-radius:8px; font-family:inherit; font-size:13.5px; font-weight:500; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:6px; transition:background .15s ease;
+  }
+  .new-btn:hover{background:var(--moss-dark);}
+  .new-btn svg{width:14px;height:14px;stroke:currentColor;}
+  .note-list{flex:1; overflow-y:auto; padding:14px 10px 14px;}
+  .note-item{position:relative; display:flex; gap:0; margin-bottom:6px; border-radius:8px; cursor:pointer; background:transparent; transition:background .12s ease;}
+  .note-item:hover{background:rgba(72,88,63,0.07);}
+  .note-item.active{background:var(--paper-raised); box-shadow:var(--shadow);}
+  .note-spine{width:4px; border-radius:4px 0 0 4px; flex-shrink:0;}
+  .note-item-body{padding:10px 12px 10px 10px; min-width:0; flex:1;}
+  .note-item-title{font-size:14px; font-weight:500; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px;}
+  .note-item-title.empty{color:var(--ink-soft); font-weight:400;}
+  .note-item-preview{font-size:12px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:5px;}
+  .note-item-date{font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--ink-soft); opacity:0.75;}
+  .empty-list{padding:40px 16px; text-align:center; color:var(--ink-soft); font-size:13px; line-height:1.7;}
+  .memo-filter-chip{
+    display:flex; align-items:center; gap:10px; background:#E7EDE2; border:1px solid var(--moss);
+    color:var(--moss-dark); border-radius:8px; padding:8px 10px; margin:0 4px 10px; font-size:11.5px;
+  }
+  .memo-filter-chip span{flex:1;}
+  .memo-filter-chip button{background:none; border:none; cursor:pointer; color:var(--moss-dark); font-family:inherit; font-size:11px; text-decoration:underline;}
+  .note-item-linked-date{
+    display:inline-flex; align-items:center; gap:3px; margin-left:8px; color:var(--moss-dark);
+    font-family:'IBM Plex Mono', monospace; font-size:10px;
+  }
+  .note-item-linked-date svg{width:11px;height:11px; stroke:currentColor;}
+  .link-date-btn{display:flex; align-items:center; gap:4px; font-family:'IBM Plex Mono',monospace; font-size:11px;}
+  .link-date-btn.active{background:#E7EDE2; color:var(--moss-dark);}
+  .link-date-btn svg{width:15px;height:15px;}
+  .sidebar-foot{padding:12px 18px; border-top:1px solid var(--line); display:flex; gap:8px;}
+  .foot-btn{flex:1; background:none; border:1px solid var(--line); border-radius:7px; padding:7px 8px; font-family:inherit; font-size:12px; color:var(--ink-soft); cursor:pointer; transition:all .15s ease;}
+  .foot-btn:hover{border-color:var(--moss); color:var(--moss-dark);}
+
+  /* ---------- Memo: editor ---------- */
+  .editor{
+    display:flex; flex-direction:column; min-width:0;
+    background: repeating-linear-gradient(var(--paper-raised), var(--paper-raised) 33px, #EFEAD8 34px);
+    background-attachment:local;
+  }
+  .editor.no-note{background:var(--paper-raised);}
+  .editor-toolbar{display:flex; align-items:center; justify-content:space-between; padding:16px 32px 0;}
+  .save-status{font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft); display:flex; align-items:center; gap:6px;}
+  .save-status .dot{width:6px;height:6px;border-radius:50%; background:var(--moss); opacity:0; transition:opacity .2s ease;}
+  .save-status.saving .dot{opacity:1;}
+  .spine-picker{display:flex; gap:6px; flex-wrap:wrap; max-width:180px;}
+  .spine-swatch{width:16px;height:16px; border-radius:50%; cursor:pointer; border:2px solid transparent;}
+  .spine-swatch.selected{border-color:var(--ink);}
+  .icon-btn{background:none; border:none; cursor:pointer; padding:6px; border-radius:6px; color:var(--ink-soft); display:flex; transition:all .15s ease;}
+  .icon-btn:hover{background:var(--danger-soft); color:var(--danger);}
+  .icon-btn svg{width:16px;height:16px; stroke:currentColor;}
+  .editor-body{flex:1; overflow-y:auto; padding:6px 32px 40px; display:flex; flex-direction:column;}
+  .title-input{border:none; outline:none; background:transparent; font-family:'Fraunces', serif; font-weight:600; font-size:26px; color:var(--ink); padding:14px 0 8px; line-height:34px;}
+  .title-input::placeholder{color:#B9B3A0;}
+  .body-input{flex:1; border:none; outline:none; resize:none; background:transparent; font-family:'Zen Kaku Gothic New', sans-serif; font-size:15px; line-height:34px; color:var(--ink); padding:0;}
+  .body-input::placeholder{color:#B9B3A0;}
+  .no-note-state{flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:14px; color:var(--ink-soft);}
+  .no-note-state svg{width:40px;height:40px; stroke:var(--line); stroke-width:1.2;}
+  .no-note-state p{margin:0; font-size:13.5px;}
+  .no-note-state button{background:var(--moss); color:#F6F4EC; border:none; padding:9px 16px; border-radius:8px; font-family:inherit; font-size:13px; cursor:pointer;}
+  .no-note-state button:hover{background:var(--moss-dark);}
+  #import-file{display:none;}
+  .mobile-back{display:none; background:none; border:none; cursor:pointer; align-items:center; gap:4px; color:var(--moss-dark); font-family:inherit; font-size:13px; padding:6px 0;}
+  .mobile-back svg{width:16px;height:16px;stroke:currentColor;}
+
+  /* ---------- Calendar ---------- */
+  .cal-wrap{display:flex; width:100%; height:100%; flex:1; min-width:0;}
+  .cal-main{flex:1; min-width:0; overflow-y:auto; padding:26px 30px;}
+  .cal-header{display:flex; align-items:center; gap:12px; margin-bottom:18px;}
+  .cal-title{font-family:'Fraunces',serif; font-weight:600; font-size:21px; flex:1;}
+  .cal-nav-btn{width:30px;height:30px; border:1px solid var(--line); background:var(--paper-raised); border-radius:7px; cursor:pointer; color:var(--ink); font-size:15px; display:flex; align-items:center; justify-content:center; font-family:inherit;}
+  .cal-nav-btn:hover{border-color:var(--moss); color:var(--moss-dark);}
+  .cal-today-btn{padding:7px 12px; border:1px solid var(--line); background:var(--paper-raised); border-radius:7px; cursor:pointer; font-family:inherit; font-size:12.5px; color:var(--ink-soft);}
+  .cal-today-btn:hover{border-color:var(--moss); color:var(--moss-dark);}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); border-top:1px solid var(--line); border-left:1px solid var(--line); background:var(--paper-raised); border-radius:8px; overflow:hidden; box-shadow:var(--shadow);}
+  .cal-weekday{padding:8px 0; text-align:center; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-soft); border-right:1px solid var(--line); border-bottom:1px solid var(--line); background:var(--paper-dim);}
+  .cal-weekday.sun{color:var(--danger);}
+  .cal-weekday.sat{color:var(--slate);}
+  .cal-day{min-height:88px; min-width:0; overflow:hidden; border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:6px 6px 4px; cursor:pointer; position:relative; transition:background .12s ease; display:flex; flex-direction:column;}
+  .cal-day:hover{background:rgba(72,88,63,0.05);}
+  .cal-day.outside{background:var(--paper-dim);}
+  .cal-day.outside .cal-day-num{color:#C7C2AE;}
+  .cal-day.selected{background:rgba(72,88,63,0.09);}
+  .cal-day-num{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink); width:20px;height:20px; display:flex;align-items:center;justify-content:center; border-radius:50%;}
+  .cal-day.today .cal-day-num{background:var(--amber); color:#FFF; font-weight:600;}
+  .cal-events{margin-top:4px; display:flex; flex-direction:column; gap:2px; overflow:hidden; min-width:0;}
+  .cal-event-chip{font-size:10.5px; padding:2px 5px; border-radius:4px; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; max-width:100%;}
+  .cal-more{font-size:10px; color:var(--ink-soft); padding-left:5px;}
+  .cal-panel{width:280px; flex-shrink:0; border-left:1px solid var(--line); background:var(--paper-raised); padding:22px 20px; overflow-y:auto;}
+  .cal-panel-date{font-family:'Fraunces',serif; font-weight:600; font-size:18px; margin:0;}
+  .cal-panel-header{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:4px;}
+  .cal-link-btns{display:flex; gap:6px; flex-shrink:0;}
+  .cal-money-link{
+    display:flex; align-items:center; gap:5px; padding:5px 9px; border:1px solid var(--line);
+    background:var(--paper); border-radius:7px; font-family:inherit; font-size:11.5px; color:var(--ink-soft);
+    cursor:pointer; flex-shrink:0; transition:all .15s ease;
+  }
+  .cal-money-link svg{width:13px;height:13px; stroke:currentColor;}
+  .cal-money-link:hover{border-color:var(--moss); color:var(--moss-dark);}
+  .cal-panel-sub{font-size:12px; color:var(--ink-soft); margin:0 0 16px;}
+  .cal-event-row{display:flex; align-items:flex-start; gap:8px; padding:8px 0; border-bottom:1px solid var(--line);}
+  .cal-event-dot{width:12px;height:12px;border-radius:50%; margin-top:4px; flex-shrink:0; cursor:pointer; border:2px solid transparent; transition:border-color .15s ease;}
+  .cal-event-dot:hover{border-color:var(--line);}
+  .cal-event-row-wrap{border-bottom:1px solid var(--line);}
+  .cal-event-row-wrap .cal-event-row{border-bottom:none; padding-bottom:4px;}
+  .cal-edit-swatches{padding:0 0 10px 20px; flex-wrap:wrap;}
+  .cal-event-info{flex:1; min-width:0;}
+  .cal-event-time{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-soft);}
+  .cal-event-title{font-size:13px; color:var(--ink); word-break:break-word;}
+  .cal-event-del{background:none; border:none; cursor:pointer; color:var(--ink-soft); padding:2px;}
+  .cal-event-del:hover{color:var(--danger);}
+  .cal-add-form{margin-top:14px; display:flex; flex-direction:column; gap:8px;}
+  .cal-add-form input[type=text], .cal-add-form input[type=time]{padding:7px 9px; border:1px solid var(--line); border-radius:7px; font-family:inherit; font-size:13px; outline:none; background:var(--paper);}
+  .cal-add-form input:focus{border-color:var(--moss);}
+  .cal-time-row{display:flex; align-items:center; gap:8px;}
+  .cal-time-row label{font-size:11.5px; color:var(--ink-soft);}
+  .cal-color-row{display:flex; gap:6px; align-items:center; flex-wrap:wrap;}
+  .cal-add-btn{background:var(--moss); color:#F6F4EC; border:none; border-radius:7px; padding:8px; font-family:inherit; font-size:13px; cursor:pointer;}
+  .cal-add-btn:hover{background:var(--moss-dark);}
+  .cal-empty{color:var(--ink-soft); font-size:12.5px; padding:10px 0;}
+  .cal-mobile-back{display:none;}
+
+  /* ---------- 家計簿 ---------- */
+  .money-wrap{width:100%; height:100%; overflow-y:auto; padding:26px 32px;}
+  .money-header{display:flex; align-items:center; gap:12px; margin-bottom:12px;}
+  .money-filter-chip{
+    display:flex; align-items:center; gap:10px; background:#E7EDE2; border:1px solid var(--moss);
+    color:var(--moss-dark); border-radius:8px; padding:8px 12px; margin-bottom:16px; max-width:640px;
+    font-size:12.5px;
+  }
+  .money-filter-chip span{flex:1;}
+  .money-filter-chip button{background:none; border:none; cursor:pointer; color:var(--moss-dark); font-family:inherit; font-size:12px; text-decoration:underline;}
+  .money-title{font-family:'Fraunces',serif; font-weight:600; font-size:21px; flex:1;}
+  .money-summary{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:24px; max-width:640px;}
+  .money-stat{background:var(--paper-raised); border:1px solid var(--line); border-radius:10px; padding:14px 16px; box-shadow:var(--shadow);}
+  .money-stat-label{font-size:11.5px; color:var(--ink-soft); margin-bottom:6px;}
+  .money-stat-value{font-family:'IBM Plex Mono',monospace; font-size:19px; font-weight:500;}
+  .money-stat.income .money-stat-value{color:var(--moss-dark);}
+  .money-stat.expense .money-stat-value{color:var(--danger);}
+  .money-stat.balance .money-stat-value{color:var(--ink);}
+  .money-form{
+    background:var(--paper-raised); border:1px solid var(--line); border-radius:10px;
+    padding:16px 18px; margin-bottom:22px; max-width:640px; box-shadow:var(--shadow);
+  }
+  .money-type-toggle{display:flex; gap:6px; margin-bottom:12px;}
+  .money-type-btn{
+    flex:1; padding:8px; border:1px solid var(--line); background:var(--paper);
+    border-radius:7px; font-family:inherit; font-size:13px; cursor:pointer; color:var(--ink-soft);
+    transition:all .15s ease;
+  }
+  .money-type-btn.selected.expense{background:var(--danger-soft); border-color:var(--danger); color:var(--danger);}
+  .money-type-btn.selected.income{background:#E7EDE2; border-color:var(--moss); color:var(--moss-dark);}
+  .money-form-row{display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;}
+  .money-form-row input{
+    padding:8px 10px; border:1px solid var(--line); border-radius:7px; font-family:inherit;
+    font-size:13.5px; outline:none; background:var(--paper); flex:1; min-width:120px;
+  }
+  .money-form-row input:focus{border-color:var(--moss);}
+  .money-form-row input[type=date]{flex:0 0 150px;}
+  .money-form-row input[type=number]{flex:0 0 140px; font-family:'IBM Plex Mono',monospace;}
+  .money-add-btn{
+    background:var(--moss); color:#F6F4EC; border:none; border-radius:7px; padding:9px 18px;
+    font-family:inherit; font-size:13.5px; cursor:pointer;
+  }
+  .money-add-btn:hover{background:var(--moss-dark);}
+  .money-list{max-width:640px; border-top:1px solid var(--line);}
+  .money-row{
+    display:flex; align-items:center; gap:12px; padding:10px 2px;
+    border-bottom:1px solid var(--line);
+  }
+  .money-row-date{font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-soft); width:52px; flex-shrink:0;}
+  .money-row-main{flex:1; min-width:0;}
+  .money-row-category{font-size:13.5px; color:var(--ink);}
+  .money-row-memo{font-size:11.5px; color:var(--ink-soft); margin-top:2px;}
+  .money-row-amount{font-family:'IBM Plex Mono',monospace; font-size:14.5px; font-weight:500; flex-shrink:0;}
+  .money-row-amount.income{color:var(--moss-dark);}
+  .money-row-amount.expense{color:var(--danger);}
+  .money-row-del{background:none; border:none; cursor:pointer; color:var(--ink-soft); padding:4px; flex-shrink:0;}
+  .money-row-del:hover{color:var(--danger);}
+  .money-form.editing{border-color:var(--moss); box-shadow:0 0 0 3px rgba(72,88,63,0.12), var(--shadow);}
+  .money-form-editing-label{font-size:11.5px; color:var(--moss-dark); font-weight:500; margin-bottom:10px;}
+  .money-method-row{display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;}
+  .money-method-btn{
+    display:flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid var(--line);
+    background:var(--paper); border-radius:7px; font-family:inherit; font-size:12px; color:var(--ink-soft);
+    cursor:pointer; transition:all .15s ease;
+  }
+  .money-method-btn svg{width:14px;height:14px; stroke:currentColor;}
+  .money-method-btn.selected{background:#E7EDE2; border-color:var(--moss); color:var(--moss-dark);}
+  .money-form-actions{display:flex; gap:8px; align-items:center;}
+  .money-cancel-btn{background:none; border:1px solid var(--line); color:var(--ink-soft); border-radius:7px; padding:9px 16px; font-family:inherit; font-size:13.5px; cursor:pointer;}
+  .money-cancel-btn:hover{border-color:var(--danger); color:var(--danger);}
+  .money-row-method{display:flex; align-items:center; color:var(--ink-soft); flex-shrink:0;}
+  .money-row-method svg{width:15px;height:15px; stroke:currentColor;}
+  .money-row{cursor:pointer; transition:background .12s ease;}
+  .money-row:hover{background:rgba(72,88,63,0.05);}
+  .money-row.editing{background:rgba(72,88,63,0.09);}
+  .money-empty{color:var(--ink-soft); font-size:13px; padding:20px 2px;}
+
+  /* ---------- 選択モーダル ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(36,39,32,0.35);
+    display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;
+  }
+  .modal-panel{
+    background:var(--paper-raised); border-radius:12px; padding:24px 26px;
+    max-width:340px; width:100%; box-shadow:0 8px 30px rgba(36,39,32,0.2);
+  }
+  .modal-title{font-family:'Fraunces',serif; font-weight:600; font-size:18px; margin:0 0 14px;}
+  .modal-checkbox-row{
+    display:flex; align-items:center; gap:10px; padding:8px 0; font-size:14px; color:var(--ink); cursor:pointer;
+  }
+  .modal-checkbox-row.disabled{color:var(--ink-soft); cursor:default;}
+  .modal-checkbox-row input{width:16px;height:16px; accent-color:var(--moss); flex-shrink:0;}
+  .modal-count{color:var(--ink-soft); font-size:12px;}
+  .modal-note{font-size:11.5px; color:var(--ink-soft); margin:10px 0 0; line-height:1.6;}
+  .modal-inline-link{background:none; border:none; cursor:pointer; color:var(--slate); font-family:inherit; font-size:11.5px; text-decoration:underline; padding:0;}
+  .modal-actions{display:flex; gap:8px; margin-top:18px; justify-content:flex-end;}
+  .modal-btn{padding:8px 16px; border-radius:7px; font-family:inherit; font-size:13px; cursor:pointer; border:1px solid var(--line); background:var(--paper); color:var(--ink-soft);}
+  .modal-btn:hover{border-color:var(--moss); color:var(--moss-dark);}
+  .modal-btn.primary{background:var(--moss); color:#F6F4EC; border:none;}
+  .modal-btn.primary:hover{background:var(--moss-dark); color:#F6F4EC;}
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 720px){
+    .app{grid-template-columns: 1fr;}
+    .sidebar{border-right:none; border-bottom:1px solid var(--line); height:100%;}
+    .app.mobile-editing .sidebar{display:none;}
+    .app:not(.mobile-editing) .editor{display:none;}
+    .mobile-back{display:flex !important;}
+    .cal-wrap{flex-direction:column;}
+    .cal-panel{width:100%; border-left:none; border-top:1px solid var(--line);}
+    .cal-day{min-height:64px;}
+    .cal-main{padding:16px 14px;}
+    .cal-header{flex-wrap:wrap; gap:8px; row-gap:10px;}
+    .cal-title{flex:1 1 100%; order:-1; font-size:18px;}
+    .money-summary{grid-template-columns:1fr; max-width:none;}
+    .money-form-row input[type=date], .money-form-row input[type=number]{flex:1 1 100%;}
+  }
+
+  :focus-visible{outline:2px solid var(--slate); outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+
+<div class="app-shell" id="app-shell">
+  <nav class="nav-rail">
+    <button class="nav-btn active" data-view="memo" title="メモ">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>
+    </button>
+    <button class="nav-btn" data-view="calendar" title="カレンダー">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    </button>
+    <button class="nav-btn" data-view="money" title="家計簿">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 8.5h4a2 2 0 0 1 0 4H9"/><path d="M9 12.5h5"/><line x1="11" y1="6.5" x2="11" y2="8.5"/><line x1="11" y1="16.5" x2="11" y2="14.5"/></svg>
+    </button>
+  </nav>
+
+  <div class="view-container">
+    <div class="view active" id="view-memo">
+      <div class="app" id="app">
+        <aside class="sidebar">
+          <div class="sidebar-head">
+            <p class="brand">LifeLog <small>local</small></p>
+            <div class="search">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input id="search-input" type="text" placeholder="メモを検索">
+            </div>
+          </div>
+          <button class="new-btn" id="new-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            新規メモ
+          </button>
+          <div class="note-list" id="note-list"></div>
+          <div class="sidebar-foot">
+            <button class="foot-btn" id="export-btn" title="メモ・カレンダー・家計簿をまとめて書き出す">エクスポート</button>
+            <button class="foot-btn" id="import-btn" title="メモ・カレンダー・家計簿をまとめて読み込む">インポート</button>
+            <input type="file" id="import-file" accept="application/json">
+          </div>
+        </aside>
+        <main class="editor no-note" id="editor">
+          <div class="no-note-state" id="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>
+            <p>メモを選ぶか、新規作成してください</p>
+            <button id="empty-new-btn">新規メモを作成</button>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div class="view" id="view-calendar">
+      <div class="cal-wrap" id="cal-wrap"></div>
+    </div>
+
+    <div class="view" id="view-money">
+      <div class="money-wrap" id="money-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  /* ================= 共通ユーティリティ ================= */
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+  function pad2(n){ return String(n).padStart(2,'0'); }
+
+  const SPINE_COLORS = ['#48583F', '#3B5872', '#C8933D', '#9A4A32', '#8A6BA8', '#C6C0AC', '#3F7A74', '#B0555F', '#7A5C42', '#6B7280'];
+
+  /* ================= メモ帳 ================= */
+  const STORAGE_KEY = 'memoApp.notes.v1';
+  let notes = loadNotes();
+  let activeId = null;
+  let saveTimer = null;
+
+  const noteListEl = document.getElementById('note-list');
+  const editorEl = document.getElementById('editor');
+  const emptyStateEl = document.getElementById('empty-state');
+  const searchInput = document.getElementById('search-input');
+  const memoAppEl = document.getElementById('app');
+
+  function loadNotes(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    }catch(e){ console.error('メモの読み込みに失敗しました', e); return []; }
+  }
+  function persist(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(notes)); return true; }
+    catch(e){ console.error('メモの保存に失敗しました', e); alert('保存に失敗しました。ブラウザの保存容量が不足している可能性があります。'); return false; }
+  }
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+  let memoFocusDate = null;
+
+  function createNote(presetDate){
+    const note = { id: uid(), title:'', body:'', color: SPINE_COLORS[0], linkedDate: presetDate || null, updatedAt: Date.now(), createdAt: Date.now() };
+    notes.unshift(note);
+    activeId = note.id;
+    persist(); renderList(searchInput.value); renderEditor(); focusTitle();
+  }
+  function deleteNote(id){
+    const note = notes.find(n => n.id === id);
+    if(!note) return;
+    const label = note.title || '(無題のメモ)';
+    if(!confirm(label + ' を削除しますか?この操作は元に戻せません。')) return;
+    notes = notes.filter(n => n.id !== id);
+    if(activeId === id) activeId = null;
+    persist(); renderList(); renderEditor();
+  }
+  function updateActiveNote(patch){
+    const note = notes.find(n => n.id === activeId);
+    if(!note) return;
+    Object.assign(note, patch, {updatedAt: Date.now()});
+    scheduleSave();
+  }
+  function scheduleSave(){
+    const status = document.getElementById('save-status');
+    if(status) status.classList.add('saving');
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      persist();
+      renderList(searchInput.value);
+      if(status) status.classList.remove('saving');
+    }, 400);
+  }
+  function formatDate(ts){
+    const d = new Date(ts); const now = new Date();
+    const sameDay = d.toDateString() === now.toDateString();
+    if(sameDay) return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+    return (d.getMonth()+1) + '/' + d.getDate();
+  }
+  function formatShortDate(dateStr){
+    const d = new Date(dateStr + 'T00:00:00');
+    return (d.getMonth()+1) + '/' + d.getDate();
+  }
+  function renderList(filter){
+    filter = (filter || '').trim().toLowerCase();
+    const sorted = [...notes].sort((a,b) => b.updatedAt - a.updatedAt);
+    let filtered = filter ? sorted.filter(n => (n.title + ' ' + n.body).toLowerCase().includes(filter)) : sorted;
+    if(memoFocusDate) filtered = filtered.filter(n => n.linkedDate === memoFocusDate);
+
+    const chipHtml = memoFocusDate
+      ? '<div class="memo-filter-chip"><span>' + formatShortDate(memoFocusDate) + 'に紐づくメモのみ表示中</span><button id="memo-filter-clear">✕ すべて表示</button></div>'
+      : '';
+
+    if(filtered.length === 0){
+      noteListEl.innerHTML = chipHtml + '<div class="empty-list">' +
+        (memoFocusDate ? 'この日に紐づくメモはまだありません。' : (notes.length === 0 ? 'まだメモがありません。<br>「新規メモ」から作成しましょう。' : '一致するメモが見つかりません。')) +
+        '</div>';
+      const clearBtn0 = document.getElementById('memo-filter-clear');
+      if(clearBtn0) clearBtn0.addEventListener('click', () => { memoFocusDate = null; renderList(searchInput.value); });
+      return;
+    }
+    noteListEl.innerHTML = chipHtml + filtered.map(n => {
+      const title = n.title ? escapeHtml(n.title) : '(無題のメモ)';
+      const preview = escapeHtml((n.body || '').replace(/\n/g, ' ').slice(0, 60)) || ' ';
+      const active = n.id === activeId ? ' active' : '';
+      const dateBadge = n.linkedDate
+        ? '<span class="note-item-linked-date" title="紐づけられた日付"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' + formatShortDate(n.linkedDate) + '</span>'
+        : '';
+      return '<div class="note-item' + active + '" data-id="' + n.id + '">' +
+        '<div class="note-spine" style="background:' + n.color + '"></div>' +
+        '<div class="note-item-body">' +
+          '<div class="note-item-title' + (n.title ? '' : ' empty') + '">' + title + '</div>' +
+          '<div class="note-item-preview">' + preview + '</div>' +
+          '<div class="note-item-date">' + formatDate(n.updatedAt) + dateBadge + '</div>' +
+        '</div></div>';
+    }).join('');
+    const clearBtn = document.getElementById('memo-filter-clear');
+    if(clearBtn) clearBtn.addEventListener('click', () => { memoFocusDate = null; renderList(searchInput.value); });
+    noteListEl.querySelectorAll('.note-item').forEach(el => {
+      el.addEventListener('click', () => {
+        activeId = el.getAttribute('data-id');
+        renderList(searchInput.value); renderEditor();
+        memoAppEl.classList.add('mobile-editing');
+      });
+    });
+  }
+  function focusTitle(){ requestAnimationFrame(() => { const el = document.getElementById('title-input'); if(el) el.focus(); }); }
+  function renderEditor(){
+    const note = notes.find(n => n.id === activeId);
+    if(!note){ editorEl.classList.add('no-note'); editorEl.innerHTML=''; editorEl.appendChild(emptyStateEl); return; }
+    editorEl.classList.remove('no-note');
+    editorEl.innerHTML =
+      '<div class="editor-toolbar">' +
+        '<button class="mobile-back" id="back-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg> 一覧へ</button>' +
+        '<div class="spine-picker" id="spine-picker"></div>' +
+        '<button class="icon-btn link-date-btn' + (note.linkedDate ? ' active' : '') + '" id="link-date-btn" title="日付を紐づける">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' +
+          (note.linkedDate ? formatShortDate(note.linkedDate) : '') +
+        '</button>' +
+        '<div class="save-status" id="save-status"><span class="dot"></span>保存済み</div>' +
+        '<button class="icon-btn" id="delete-btn" title="削除"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>' +
+      '</div>' +
+      '<div class="editor-body">' +
+        '<input id="title-input" class="title-input" type="text" placeholder="タイトル" value="' + escapeHtml(note.title) + '">' +
+        '<textarea id="body-input" class="body-input" placeholder="ここに入力…">' + escapeHtml(note.body) + '</textarea>' +
+      '</div>';
+    const spinePicker = document.getElementById('spine-picker');
+    spinePicker.innerHTML = SPINE_COLORS.map(c => '<div class="spine-swatch' + (c === note.color ? ' selected' : '') + '" style="background:' + c + '" data-color="' + c + '"></div>').join('');
+    spinePicker.querySelectorAll('.spine-swatch').forEach(sw => {
+      sw.addEventListener('click', () => { updateActiveNote({color: sw.getAttribute('data-color')}); renderEditor(); });
+    });
+    document.getElementById('title-input').addEventListener('input', e => updateActiveNote({title: e.target.value}));
+    document.getElementById('body-input').addEventListener('input', e => updateActiveNote({body: e.target.value}));
+    document.getElementById('delete-btn').addEventListener('click', () => deleteNote(note.id));
+    document.getElementById('link-date-btn').addEventListener('click', () => openLinkDateModal(note));
+    const backBtn = document.getElementById('back-btn');
+    if(backBtn) backBtn.addEventListener('click', () => memoAppEl.classList.remove('mobile-editing'));
+  }
+
+  function openLinkDateModal(note){
+    const rows =
+      '<input type="date" id="link-date-input" value="' + (note.linkedDate || '') + '" style="width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:7px; font-family:inherit; font-size:14px; margin-top:4px;">' +
+      '<p class="modal-note">紐づけると、カレンダーのその日のページから、このメモを開けるようになります。</p>';
+    openModal('日付を紐づける', rows, '保存', (overlay) => {
+      const val = overlay.querySelector('#link-date-input').value;
+      updateActiveNote({linkedDate: val || null});
+      renderEditor(); renderList(searchInput.value);
+    });
+    if(note.linkedDate){
+      const overlay = document.querySelector('.modal-overlay');
+      const clearBtn = document.createElement('button');
+      clearBtn.className = 'modal-btn';
+      clearBtn.textContent = '紐づけを解除';
+      clearBtn.addEventListener('click', () => {
+        updateActiveNote({linkedDate: null});
+        renderEditor(); renderList(searchInput.value);
+        overlay.remove();
+      });
+      overlay.querySelector('.modal-actions').prepend(clearBtn);
+    }
+  }
+  function closeModal(overlay){ overlay.remove(); }
+  function openModal(titleText, rowsHtml, confirmLabel, onConfirm){
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML =
+      '<div class="modal-panel">' +
+        '<p class="modal-title">' + titleText + '</p>' +
+        rowsHtml +
+        '<div class="modal-actions">' +
+          '<button class="modal-btn" id="modal-cancel">キャンセル</button>' +
+          '<button class="modal-btn primary" id="modal-confirm">' + confirmLabel + '</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', e => { if(e.target === overlay) closeModal(overlay); });
+    overlay.querySelector('#modal-cancel').addEventListener('click', () => closeModal(overlay));
+    overlay.querySelector('#modal-confirm').addEventListener('click', () => { onConfirm(overlay); closeModal(overlay); });
+    return overlay;
+  }
+
+  function openExportModal(){
+    const rows =
+      '<label class="modal-checkbox-row"><input type="checkbox" id="exp-notes" checked> メモ帳 <span class="modal-count">(' + notes.length + '件)</span></label>' +
+      '<label class="modal-checkbox-row"><input type="checkbox" id="exp-events" checked> カレンダーの予定 <span class="modal-count">(' + events.length + '件)</span></label>' +
+      '<label class="modal-checkbox-row"><input type="checkbox" id="exp-tx" checked> 家計簿 <span class="modal-count">(' + transactions.length + '件)</span></label>';
+    openModal('書き出す項目を選択', rows, '書き出す', (overlay) => {
+      const includeNotes = overlay.querySelector('#exp-notes').checked;
+      const includeEvents = overlay.querySelector('#exp-events').checked;
+      const includeTx = overlay.querySelector('#exp-tx').checked;
+      if(!includeNotes && !includeEvents && !includeTx){ alert('少なくとも1つは選択してください。'); return; }
+      exportSelected(includeNotes, includeEvents, includeTx);
+    });
+  }
+
+  function exportSelected(includeNotes, includeEvents, includeTx){
+    const payload = { appName: 'メモ帳・カレンダー・家計簿', exportedAt: new Date().toISOString() };
+    if(includeNotes) payload.notes = notes;
+    if(includeEvents) payload.events = events;
+    if(includeTx) payload.transactions = transactions;
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const d = new Date();
+    a.href = url; a.download = 'app-backup-' + d.getFullYear() + pad2(d.getMonth()+1) + pad2(d.getDate()) + '.json';
+    a.click(); URL.revokeObjectURL(url);
+  }
+
+  function mergeById(existingArr, incomingArr){
+    const validated = (incomingArr || []).filter(n => n && typeof n === 'object' && typeof n.id === 'string');
+    const existingIds = new Set(existingArr.map(n => n.id));
+    const added = validated.filter(n => !existingIds.has(n.id));
+    return added;
+  }
+
+  function importAll(file){
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const imported = JSON.parse(reader.result);
+        let importedNotes = [], importedEvents = [], importedTx = [];
+        if(Array.isArray(imported)){
+          // 旧バージョン(メモのみ)のバックアップファイルとの互換用
+          importedNotes = imported;
+        } else if(imported && typeof imported === 'object'){
+          importedNotes = Array.isArray(imported.notes) ? imported.notes : [];
+          importedEvents = Array.isArray(imported.events) ? imported.events : [];
+          importedTx = Array.isArray(imported.transactions) ? imported.transactions : [];
+        } else {
+          throw new Error('不正な形式です');
+        }
+        if(importedNotes.length === 0 && importedEvents.length === 0 && importedTx.length === 0){
+          throw new Error('このファイルには読み込めるデータがありません');
+        }
+        openImportModal(importedNotes, importedEvents, importedTx);
+      }catch(e){ alert('ファイルの読み込みに失敗しました: ' + e.message); }
+    };
+    reader.readAsText(file);
+  }
+
+  function openImportModal(importedNotes, importedEvents, importedTx){
+    function row(id, label, arr){
+      const has = arr.length > 0;
+      return '<label class="modal-checkbox-row' + (has ? '' : ' disabled') + '">' +
+        '<input type="checkbox" id="' + id + '"' + (has ? ' checked' : ' disabled') + '> ' + label +
+        ' <span class="modal-count">(' + arr.length + '件)</span></label>';
+    }
+    const rows =
+      row('imp-notes', 'メモ帳', importedNotes) +
+      row('imp-events', 'カレンダーの予定', importedEvents) +
+      row('imp-tx', '家計簿', importedTx) +
+      '<p class="modal-note">ファイル内にこのアプリのデータと同じIDがある場合は重複登録されません。</p>';
+    openModal('読み込む項目を選択', rows, '読み込む', (overlay) => {
+      const includeNotes = overlay.querySelector('#imp-notes').checked;
+      const includeEvents = overlay.querySelector('#imp-events').checked;
+      const includeTx = overlay.querySelector('#imp-tx').checked;
+
+      const addedNotes = includeNotes ? mergeById(notes, importedNotes) : [];
+      const addedEvents = includeEvents ? mergeById(events, importedEvents) : [];
+      const addedTx = includeTx ? mergeById(transactions, importedTx) : [];
+
+      notes = [...addedNotes, ...notes];
+      events = [...addedEvents, ...events];
+      transactions = [...addedTx, ...transactions];
+
+      persist();
+      persistEvents();
+      persistTransactions();
+
+      renderList(searchInput.value);
+      const activeView = document.querySelector('.view.active');
+      if(activeView && activeView.id === 'view-calendar') renderCalendarView();
+      if(activeView && activeView.id === 'view-money') renderMoneyView();
+
+      alert('メモ' + addedNotes.length + '件、予定' + addedEvents.length + '件、家計簿' + addedTx.length + '件を読み込みました。');
+    });
+  }
+
+  document.getElementById('new-btn').addEventListener('click', () => createNote(memoFocusDate));
+  document.getElementById('empty-new-btn').addEventListener('click', () => createNote(memoFocusDate));
+  document.getElementById('export-btn').addEventListener('click', openExportModal);
+  document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file').click());
+  document.getElementById('import-file').addEventListener('change', e => { if(e.target.files[0]) importAll(e.target.files[0]); e.target.value=''; });
+  searchInput.addEventListener('input', () => renderList(searchInput.value));
+  renderList(); renderEditor();
+
+  /* ================= カレンダー ================= */
+  const EVENTS_KEY = 'memoApp.events.v1';
+  const WEEKDAYS = ['日','月','火','水','木','金','土'];
+  let events = loadEvents();
+  let calCursor = new Date(); calCursor.setDate(1);
+  let selectedDate = toDateStr(new Date());
+  let pendingColor = SPINE_COLORS[0];
+  let colorEditingId = null;
+
+  function loadEvents(){
+    try{ const raw = localStorage.getItem(EVENTS_KEY); if(!raw) return []; const p = JSON.parse(raw); return Array.isArray(p)?p:[]; }
+    catch(e){ console.error('予定の読み込みに失敗しました', e); return []; }
+  }
+  function persistEvents(){
+    try{ localStorage.setItem(EVENTS_KEY, JSON.stringify(events)); return true; }
+    catch(e){ console.error('予定の保存に失敗しました', e); alert('保存に失敗しました。ブラウザの保存容量が不足している可能性があります。'); return false; }
+  }
+  function toDateStr(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+  function eventsOn(dateStr){
+    return events.filter(e => e.date === dateStr).sort((a,b) => (a.time||'99:99').localeCompare(b.time||'99:99'));
+  }
+
+  function addEvent(eventObj){
+    events.push(eventObj);
+    persistEvents();
+    renderCalendarView();
+  }
+  function removeEvent(id){
+    events = events.filter(e => e.id !== id);
+    persistEvents();
+    renderCalendarView();
+  }
+  function changeEventColor(id, color){
+    const ev = events.find(e => e.id === id);
+    if(ev){ ev.color = color; persistEvents(); }
+    renderCalendarView();
+  }
+
+  function renderCalendarView(){
+    const wrap = document.getElementById('cal-wrap');
+    const year = calCursor.getFullYear();
+    const month = calCursor.getMonth();
+    const firstDow = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+    const daysInPrevMonth = new Date(year, month, 0).getDate();
+    const totalCells = Math.ceil((firstDow + daysInMonth) / 7) * 7;
+    const todayStr = toDateStr(new Date());
+
+    let cellsHtml = '';
+    for(let i=0;i<totalCells;i++){
+      let cellDate, outside;
+      if(i < firstDow){
+        const dnum = daysInPrevMonth - firstDow + 1 + i;
+        cellDate = new Date(year, month-1, dnum); outside = true;
+      } else if(i >= firstDow + daysInMonth){
+        const dnum = i - (firstDow + daysInMonth) + 1;
+        cellDate = new Date(year, month+1, dnum); outside = true;
+      } else {
+        cellDate = new Date(year, month, i - firstDow + 1); outside = false;
+      }
+      const dStr = toDateStr(cellDate);
+      const dayEvents = eventsOn(dStr);
+      const isToday = dStr === todayStr;
+      const isSelected = dStr === selectedDate;
+      let chipsHtml = dayEvents.slice(0,3).map(e =>
+        '<div class="cal-event-chip" style="background:'+e.color+'">' + (e.time ? e.time+' ' : '') + escapeHtml(e.title) + '</div>'
+      ).join('');
+      if(dayEvents.length > 3) chipsHtml += '<div class="cal-more">+' + (dayEvents.length-3) + '件</div>';
+      cellsHtml += '<div class="cal-day' + (outside?' outside':'') + (isToday?' today':'') + (isSelected?' selected':'') + '" data-date="'+dStr+'">' +
+        '<div class="cal-day-num">' + cellDate.getDate() + '</div>' +
+        '<div class="cal-events">' + chipsHtml + '</div>' +
+      '</div>';
+    }
+    const weekdayHtml = WEEKDAYS.map((w,i) => '<div class="cal-weekday' + (i===0?' sun':'') + (i===6?' sat':'') + '">' + w + '</div>').join('');
+
+    wrap.innerHTML =
+      '<div class="cal-main">' +
+        '<div class="cal-header">' +
+          '<button class="cal-nav-btn" id="cal-prev">‹</button>' +
+          '<div class="cal-title">' + year + '年 ' + (month+1) + '月</div>' +
+          '<button class="cal-nav-btn" id="cal-next">›</button>' +
+          '<button class="cal-today-btn" id="cal-today">今日</button>' +
+        '</div>' +
+        '<div class="cal-grid">' + weekdayHtml + cellsHtml + '</div>' +
+      '</div>' +
+      '<aside class="cal-panel" id="cal-panel"></aside>';
+
+    document.getElementById('cal-prev').addEventListener('click', () => { calCursor.setMonth(calCursor.getMonth()-1); renderCalendarView(); });
+    document.getElementById('cal-next').addEventListener('click', () => { calCursor.setMonth(calCursor.getMonth()+1); renderCalendarView(); });
+    document.getElementById('cal-today').addEventListener('click', () => { calCursor = new Date(); calCursor.setDate(1); selectedDate = todayStr; renderCalendarView(); });
+    wrap.querySelectorAll('.cal-day').forEach(el => {
+      el.addEventListener('click', () => { selectedDate = el.getAttribute('data-date'); colorEditingId = null; renderCalendarView(); });
+    });
+
+    renderPanel();
+  }
+
+  function renderPanel(){
+    const panel = document.getElementById('cal-panel');
+    if(!panel) return;
+    const d = new Date(selectedDate + 'T00:00:00');
+    const dateLabel = (d.getMonth()+1) + '月' + d.getDate() + '日';
+    const wdLabel = '(' + WEEKDAYS[d.getDay()] + ')';
+    const dayEvents = eventsOn(selectedDate);
+
+    let listHtml = dayEvents.length === 0
+      ? '<div class="cal-empty">この日の予定はありません。</div>'
+      : dayEvents.map(e => {
+          const editingSwatches = colorEditingId === e.id
+            ? '<div class="cal-color-row cal-edit-swatches" data-id="'+e.id+'">' +
+                SPINE_COLORS.map(c => '<div class="spine-swatch' + (c===e.color?' selected':'') + '" style="background:'+c+'" data-color="'+c+'"></div>').join('') +
+              '</div>'
+            : '';
+          return '<div class="cal-event-row-wrap">' +
+            '<div class="cal-event-row">' +
+              '<div class="cal-event-dot" style="background:'+e.color+'" data-id="'+e.id+'" title="色を変更"></div>' +
+              '<div class="cal-event-info">' +
+                (e.time ? '<div class="cal-event-time">' + e.time + '</div>' : '') +
+                '<div class="cal-event-title">' + escapeHtml(e.title) + '</div>' +
+              '</div>' +
+              '<button class="cal-event-del" data-id="'+e.id+'" title="削除"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>' +
+            '</div>' +
+            editingSwatches +
+          '</div>';
+        }).join('');
+
+    const colorSwatches = SPINE_COLORS.map(c => '<div class="spine-swatch' + (c===pendingColor?' selected':'') + '" style="background:'+c+'" data-color="'+c+'"></div>').join('');
+
+    panel.innerHTML =
+      '<div class="cal-panel-header">' +
+        '<p class="cal-panel-date">' + dateLabel + ' <span style="font-weight:400;font-size:14px;">' + wdLabel + '</span></p>' +
+        '<div class="cal-link-btns">' +
+          '<button class="cal-money-link" id="cal-memo-link" title="この日に紐づくメモを見る">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
+            'メモ' +
+          '</button>' +
+          '<button class="cal-money-link" id="cal-money-link" title="この日の家計簿を見る">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 8.5h4a2 2 0 0 1 0 4H9"/><path d="M9 12.5h5"/></svg>' +
+            '家計簿' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+      '<p class="cal-panel-sub">' + dayEvents.length + '件の予定</p>' +
+      '<div id="cal-event-list">' + listHtml + '</div>' +
+      '<div class="cal-add-form">' +
+        '<input type="text" id="cal-new-title" placeholder="予定を入力">' +
+        '<div class="cal-time-row"><label>時刻</label><input type="time" id="cal-new-time"></div>' +
+        '<div class="cal-color-row" id="cal-color-row">' + colorSwatches + '</div>' +
+        '<button class="cal-add-btn" id="cal-add-btn">追加</button>' +
+      '</div>';
+
+    document.getElementById('cal-money-link').addEventListener('click', () => goToMoneyForDate(selectedDate));
+    document.getElementById('cal-memo-link').addEventListener('click', () => goToMemoForDate(selectedDate));
+
+    panel.querySelectorAll('.cal-event-del').forEach(btn => {
+      btn.addEventListener('click', () => { removeEvent(btn.getAttribute('data-id')); });
+    });
+    panel.querySelectorAll('.cal-event-dot').forEach(dot => {
+      dot.addEventListener('click', () => {
+        const id = dot.getAttribute('data-id');
+        colorEditingId = (colorEditingId === id) ? null : id;
+        renderPanel();
+      });
+    });
+    panel.querySelectorAll('.cal-edit-swatches .spine-swatch').forEach(sw => {
+      sw.addEventListener('click', () => {
+        const row = sw.closest('.cal-edit-swatches');
+        const id = row.getAttribute('data-id');
+        colorEditingId = null;
+        changeEventColor(id, sw.getAttribute('data-color'));
+      });
+    });
+    panel.querySelectorAll('#cal-color-row .spine-swatch').forEach(sw => {
+      sw.addEventListener('click', () => { pendingColor = sw.getAttribute('data-color'); renderPanel(); });
+    });
+    document.getElementById('cal-add-btn').addEventListener('click', addEventFromForm);
+    document.getElementById('cal-new-title').addEventListener('keydown', e => { if(e.key === 'Enter') addEventFromForm(); });
+  }
+
+  function addEventFromForm(){
+    const titleEl = document.getElementById('cal-new-title');
+    const timeEl = document.getElementById('cal-new-time');
+    const title = titleEl.value.trim();
+    if(!title){ titleEl.focus(); return; }
+    addEvent({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2,8),
+      date: selectedDate,
+      time: timeEl.value || null,
+      title: title,
+      color: pendingColor
+    });
+  }
+
+
+  /* ================= 家計簿 ================= */
+  const TX_KEY = 'memoApp.transactions.v1';
+  let transactions = loadTransactions();
+  let moneyCursor = new Date(); moneyCursor.setDate(1);
+  let pendingType = 'expense';
+  let pendingMethod = '';
+  let editingTxId = null;
+  let moneyFocusDate = null;
+
+  const PAYMENT_METHODS = [
+    { key:'cash', label:'現金', icon:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/>' },
+    { key:'credit', label:'カード', icon:'<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>' },
+    { key:'dbarai', label:'d払い', icon:'<rect x="3" y="3" width="6" height="6"/><rect x="15" y="3" width="6" height="6"/><rect x="3" y="15" width="6" height="6"/><rect x="15" y="15" width="2.5" height="2.5"/><rect x="18.5" y="15" width="2.5" height="2.5"/><rect x="15" y="18.5" width="2.5" height="2.5"/><rect x="18.5" y="18.5" width="2.5" height="2.5"/>' },
+    { key:'paypay', label:'PayPay', icon:'<rect x="3" y="3" width="6" height="6"/><rect x="15" y="3" width="6" height="6"/><rect x="3" y="15" width="6" height="6"/><rect x="15" y="15" width="2.5" height="2.5"/><rect x="18.5" y="15" width="2.5" height="2.5"/><rect x="15" y="18.5" width="2.5" height="2.5"/><rect x="18.5" y="18.5" width="2.5" height="2.5"/>' },
+    { key:'other', label:'その他', icon:'<circle cx="12" cy="12" r="9"/><circle cx="8" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="16" cy="12" r="1.2" fill="currentColor" stroke="none"/>' }
+  ];
+  // 旧バージョンで「コード決済(code)」として保存された記録も表示が消えないようにするための互換用データ
+  const LEGACY_METHODS = {
+    code: { key:'code', label:'コード決済', icon:'<rect x="3" y="3" width="6" height="6"/><rect x="15" y="3" width="6" height="6"/><rect x="3" y="15" width="6" height="6"/><rect x="15" y="15" width="2.5" height="2.5"/><rect x="18.5" y="15" width="2.5" height="2.5"/><rect x="15" y="18.5" width="2.5" height="2.5"/><rect x="18.5" y="18.5" width="2.5" height="2.5"/>' }
+  };
+  function methodInfo(key){ return PAYMENT_METHODS.find(m => m.key === key) || LEGACY_METHODS[key] || null; }
+
+  function loadTransactions(){
+    try{ const raw = localStorage.getItem(TX_KEY); if(!raw) return []; const p = JSON.parse(raw); return Array.isArray(p)?p:[]; }
+    catch(e){ console.error('家計簿データの読み込みに失敗しました', e); return []; }
+  }
+  function persistTransactions(){
+    try{ localStorage.setItem(TX_KEY, JSON.stringify(transactions)); return true; }
+    catch(e){ console.error('家計簿データの保存に失敗しました', e); alert('保存に失敗しました。ブラウザの保存容量が不足している可能性があります。'); return false; }
+  }
+  function formatYen(n){
+    return '¥' + Math.abs(n).toLocaleString('ja-JP');
+  }
+  function txInMonth(year, month){
+    return transactions.filter(t => {
+      const d = new Date(t.date + 'T00:00:00');
+      return d.getFullYear() === year && d.getMonth() === month;
+    });
+  }
+
+  function renderMoneyView(){
+    const wrap = document.getElementById('money-wrap');
+    const year = moneyCursor.getFullYear();
+    const month = moneyCursor.getMonth();
+    const monthTx = txInMonth(year, month).sort((a,b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+    const displayedTx = moneyFocusDate ? monthTx.filter(t => t.date === moneyFocusDate) : monthTx;
+
+    const incomeTotal = monthTx.filter(t => t.type === 'income').reduce((s,t) => s + t.amount, 0);
+    const expenseTotal = monthTx.filter(t => t.type === 'expense').reduce((s,t) => s + t.amount, 0);
+    const balance = incomeTotal - expenseTotal;
+
+    const todayIso = toDateStr(new Date());
+    const editingTx = editingTxId ? transactions.find(t => t.id === editingTxId) : null;
+    const formDate = editingTx ? editingTx.date : (moneyFocusDate || todayIso);
+    const formCategory = editingTx ? editingTx.category : '';
+    const formMemo = editingTx ? editingTx.memo : '';
+
+    let listHtml = displayedTx.length === 0
+      ? '<div class="money-empty">' + (moneyFocusDate ? 'この日の記録はまだありません。' : 'この月の記録はまだありません。') + '</div>'
+      : displayedTx.map(t => {
+          const d = new Date(t.date + 'T00:00:00');
+          const dateLabel = (d.getMonth()+1) + '/' + d.getDate();
+          const sign = t.type === 'income' ? '+' : '−';
+          const mi = t.method ? methodInfo(t.method) : null;
+          const methodBadge = mi
+            ? '<span class="money-row-method" title="'+mi.label+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'+mi.icon+'</svg></span>'
+            : '';
+          const activeClass = t.id === editingTxId ? ' editing' : '';
+          return '<div class="money-row' + activeClass + '" data-id="'+t.id+'">' +
+            '<div class="money-row-date">' + dateLabel + '</div>' +
+            methodBadge +
+            '<div class="money-row-main">' +
+              '<div class="money-row-category">' + (t.category ? escapeHtml(t.category) : (t.type === 'income' ? '収入' : '支出')) + '</div>' +
+              (t.memo ? '<div class="money-row-memo">' + escapeHtml(t.memo) + '</div>' : '') +
+            '</div>' +
+            '<div class="money-row-amount ' + t.type + '">' + sign + formatYen(t.amount) + '</div>' +
+            '<button class="money-row-del" data-id="'+t.id+'" title="削除"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>' +
+          '</div>';
+        }).join('');
+
+    const methodButtons = PAYMENT_METHODS.map(m =>
+      '<button type="button" class="money-method-btn' + (pendingMethod===m.key?' selected':'') + '" data-method="'+m.key+'" title="'+m.label+'">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'+m.icon+'</svg>' +
+        '<span>'+m.label+'</span>' +
+      '</button>'
+    ).join('');
+
+    const filterChip = moneyFocusDate
+      ? '<div class="money-filter-chip">' +
+          '<span>' + (new Date(moneyFocusDate+'T00:00:00').getMonth()+1) + '月' + (new Date(moneyFocusDate+'T00:00:00').getDate()) + '日の記録のみ表示中</span>' +
+          '<button id="money-filter-clear">✕ 月全体を表示</button>' +
+        '</div>'
+      : '';
+
+    wrap.innerHTML =
+      '<div class="money-header">' +
+        '<button class="cal-nav-btn" id="money-prev">‹</button>' +
+        '<div class="money-title">' + year + '年 ' + (month+1) + '月の家計簿</div>' +
+        '<button class="cal-nav-btn" id="money-next">›</button>' +
+        '<button class="cal-today-btn" id="money-today">今月</button>' +
+      '</div>' +
+      filterChip +
+      '<div class="money-summary">' +
+        '<div class="money-stat income"><div class="money-stat-label">収入</div><div class="money-stat-value">' + formatYen(incomeTotal) + '</div></div>' +
+        '<div class="money-stat expense"><div class="money-stat-label">支出</div><div class="money-stat-value">' + formatYen(expenseTotal) + '</div></div>' +
+        '<div class="money-stat balance"><div class="money-stat-label">収支</div><div class="money-stat-value">' + (balance < 0 ? '−' : '') + formatYen(balance) + '</div></div>' +
+      '</div>' +
+      '<div class="money-form' + (editingTx ? ' editing' : '') + '">' +
+        (editingTx ? '<div class="money-form-editing-label">この記録を編集中</div>' : '') +
+        '<div class="money-type-toggle">' +
+          '<button type="button" class="money-type-btn expense' + (pendingType==='expense'?' selected':'') + '" data-type="expense">支出</button>' +
+          '<button type="button" class="money-type-btn income' + (pendingType==='income'?' selected':'') + '" data-type="income">収入</button>' +
+        '</div>' +
+        '<div class="money-form-row">' +
+          '<input type="date" id="money-new-date" value="' + formDate + '">' +
+          '<input type="number" id="money-new-amount" placeholder="金額" min="0" step="1" value="' + (editingTx ? editingTx.amount : '') + '">' +
+        '</div>' +
+        '<div class="money-form-row">' +
+          '<input type="text" id="money-new-category" placeholder="カテゴリ(例: 食費、給与)" value="' + escapeHtml(formCategory) + '">' +
+          '<input type="text" id="money-new-memo" placeholder="メモ(任意)" value="' + escapeHtml(formMemo) + '">' +
+        '</div>' +
+        '<div class="money-method-row">' + methodButtons + '</div>' +
+        '<div class="money-form-actions">' +
+          '<button class="money-add-btn" id="money-add-btn">' + (editingTx ? '更新する' : '記帳する') + '</button>' +
+          (editingTx ? '<button class="money-cancel-btn" id="money-cancel-btn">キャンセル</button>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="money-list">' + listHtml + '</div>';
+
+    const filterClearBtn = document.getElementById('money-filter-clear');
+    if(filterClearBtn) filterClearBtn.addEventListener('click', () => { moneyFocusDate = null; renderMoneyView(); });
+    document.getElementById('money-prev').addEventListener('click', () => { moneyCursor.setMonth(moneyCursor.getMonth()-1); moneyFocusDate = null; renderMoneyView(); });
+    document.getElementById('money-next').addEventListener('click', () => { moneyCursor.setMonth(moneyCursor.getMonth()+1); moneyFocusDate = null; renderMoneyView(); });
+    document.getElementById('money-today').addEventListener('click', () => { moneyCursor = new Date(); moneyCursor.setDate(1); moneyFocusDate = null; renderMoneyView(); });
+    wrap.querySelectorAll('.money-type-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        pendingType = btn.getAttribute('data-type');
+        wrap.querySelectorAll('.money-type-btn').forEach(b => {
+          b.classList.toggle('selected', b.getAttribute('data-type') === pendingType);
+        });
+      });
+    });
+    wrap.querySelectorAll('.money-method-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.getAttribute('data-method');
+        pendingMethod = (pendingMethod === key) ? '' : key;
+        wrap.querySelectorAll('.money-method-btn').forEach(b => {
+          b.classList.toggle('selected', b.getAttribute('data-method') === pendingMethod);
+        });
+      });
+    });
+    wrap.querySelectorAll('.money-row').forEach(row => {
+      row.addEventListener('click', (e) => {
+        if(e.target.closest('.money-row-del')) return;
+        startEditTransaction(row.getAttribute('data-id'));
+      });
+    });
+    wrap.querySelectorAll('.money-row-del').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        if(editingTxId === id) editingTxId = null;
+        transactions = transactions.filter(t => t.id !== id);
+        persistTransactions(); renderMoneyView();
+      });
+    });
+    document.getElementById('money-add-btn').addEventListener('click', addTransactionFromForm);
+    const cancelBtn = document.getElementById('money-cancel-btn');
+    if(cancelBtn) cancelBtn.addEventListener('click', () => { editingTxId = null; pendingMethod = ''; renderMoneyView(); });
+  }
+
+  function startEditTransaction(id){
+    const tx = transactions.find(t => t.id === id);
+    if(!tx) return;
+    editingTxId = id;
+    pendingType = tx.type;
+    pendingMethod = tx.method || '';
+    renderMoneyView();
+    const amountEl = document.getElementById('money-new-amount');
+    if(amountEl) amountEl.focus();
+  }
+
+  function addTransactionFromForm(){
+    const dateEl = document.getElementById('money-new-date');
+    const amountEl = document.getElementById('money-new-amount');
+    const categoryEl = document.getElementById('money-new-category');
+    const memoEl = document.getElementById('money-new-memo');
+    const amount = parseFloat(amountEl.value);
+    if(!dateEl.value){ dateEl.focus(); return; }
+    if(!amount || amount <= 0){ amountEl.focus(); return; }
+
+    if(editingTxId){
+      const tx = transactions.find(t => t.id === editingTxId);
+      if(tx){
+        Object.assign(tx, {
+          date: dateEl.value,
+          type: pendingType,
+          amount: amount,
+          category: categoryEl.value.trim(),
+          memo: memoEl.value.trim(),
+          method: pendingMethod
+        });
+      }
+      editingTxId = null;
+    } else {
+      transactions.push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2,8),
+        date: dateEl.value,
+        type: pendingType,
+        amount: amount,
+        category: categoryEl.value.trim(),
+        memo: memoEl.value.trim(),
+        method: pendingMethod
+      });
+    }
+    persistTransactions();
+    pendingMethod = '';
+    renderMoneyView();
+  }
+
+  function goToMoneyForDate(dateStr){
+    moneyFocusDate = dateStr;
+    moneyCursor = new Date(dateStr + 'T00:00:00');
+    moneyCursor.setDate(1);
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    const moneyBtn = document.querySelector('.nav-btn[data-view="money"]');
+    if(moneyBtn) moneyBtn.classList.add('active');
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-money').classList.add('active');
+    renderMoneyView();
+  }
+
+  function goToMemoForDate(dateStr){
+    memoFocusDate = dateStr;
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    const memoBtn = document.querySelector('.nav-btn[data-view="memo"]');
+    if(memoBtn) memoBtn.classList.add('active');
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-memo').classList.add('active');
+    renderList(searchInput.value);
+  }
+
+  /* ================= ナビゲーション切り替え ================= */
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const view = btn.getAttribute('data-view');
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById('view-' + view).classList.add('active');
+      if(view === 'calendar') renderCalendarView();
+      if(view === 'money'){ moneyFocusDate = null; renderMoneyView(); }
+      if(view === 'memo'){ memoFocusDate = null; renderList(searchInput.value); }
+    });
+  });
+})();
+</script>
+</body>
+</html>
