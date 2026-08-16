@@ -49,7 +49,7 @@
 
 - HTML / CSS / JavaScript(素のJavaScript、フレームワーク不使用)
 - 単一のHTMLファイルで完結する構成
-- フォント: [Fraunces](https://fonts.google.com/specimen/Fraunces)、[Zen Kaku Gothic New](https://fonts.google.com/specimen/Zen+Kaku+Gothic+New)、[IBM Plex Mono](https://fonts.google.com/specimen/IBM+Plex+Mono)(いずれもSIL Open Font License)
+- フォント:- フォント: [Fraunces](https://fonts.google.com/specimen/Fraunces)、[Zen Kaku Gothic New](https://fonts.google.com/specimen/Zen+Kaku+Gothic+New)、[IBM Plex Mono](https://fonts.google.com/specimen/IBM+Plex+Mono)、[Orbitron](https://fonts.google.com/specimen/Orbitron)、[JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono)(いずれもSIL Open Font License)
 
 ---
 
