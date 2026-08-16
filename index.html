@@ -421,7 +421,7 @@
   const SPINE_COLORS = ['#48583F', '#3B5872', '#C8933D', '#9A4A32', '#8A6BA8', '#C6C0AC', '#3F7A74', '#B0555F', '#7A5C42', '#6B7280'];
 
   /* ================= メモ帳 ================= */
-  const STORAGE_KEY = 'memoApp.notes.v1';
+  const STORAGE_KEY = 'lifelogPortfolio.notes.v1';
   let notes = loadNotes();
   let activeId = null;
   let saveTimer = null;
@@ -713,7 +713,7 @@
   renderList(); renderEditor();
 
   /* ================= カレンダー ================= */
-  const EVENTS_KEY = 'memoApp.events.v1';
+  const EVENTS_KEY = 'lifelogPortfolio.events.v1';
   const WEEKDAYS = ['日','月','火','水','木','金','土'];
   let events = loadEvents();
   let calCursor = new Date(); calCursor.setDate(1);
@@ -907,7 +907,7 @@
 
 
   /* ================= 家計簿 ================= */
-  const TX_KEY = 'memoApp.transactions.v1';
+  const TX_KEY = 'lifelogPortfolio.transactions.v1';
   let transactions = loadTransactions();
   let moneyCursor = new Date(); moneyCursor.setDate(1);
   let pendingType = 'expense';
@@ -1165,3 +1165,4 @@
 </script>
 </body>
 </html>
+
